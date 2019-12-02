@@ -1,15 +1,13 @@
 package com.example.facebooklogintestapp;
 
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.facebook.AccessToken;
-import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -21,12 +19,19 @@ import com.facebook.login.widget.LoginButton;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+
 public class MainActivity extends AppCompatActivity {
 
+    private ImageView imageView;
     private LoginButton loginButton;
-    private TextView txtName, txtEmail;
+    private CallbackManager callbackManager;
 
-    private CallbackManager callbackManager; // для получения ответа на логин
+    private String first_name;
+    private String last_name;
+    private String email;
+    private String id;
+    private String image_url;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,15 +39,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         loginButton = findViewById(R.id.login_button);
-        txtName = findViewById(R.id.profile_name);
-        txtEmail = findViewById(R.id.profile_email);
+        imageView = findViewById(R.id.flowers);
 
         callbackManager = CallbackManager.Factory.create();
+        loginButton.setPermissions(Arrays.asList("email", "public_profile"));
 
         // для ответа на результат логина
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
+                AccessToken accessToken = loginResult.getAccessToken();
+                loadUserProfile(accessToken);
             }
             @Override
             public void onCancel() {
@@ -59,37 +66,23 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    // Отслеживание маркеров доступа
-    AccessTokenTracker tokenTracker = new AccessTokenTracker() {
-        @Override
-        protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
-            if (currentAccessToken==null) {// если юзер не залогинен
-                txtName.setText("");
-                txtEmail.setText("");
-                Toast.makeText(MainActivity.this, "User logged out", Toast.LENGTH_LONG).show();
-            } else { // если юзер залогинен
-                // loadUserProfile(currentAccessToken);
-                loadNextActivity(currentAccessToken);
-            }
-        }
-    };
-
+/*
     private void loadNextActivity(AccessToken newAccessToken) {
         Intent intent = new Intent(this, NextActivity.class);
         startActivity(intent);
     }
-/*
+*/
     private void loadUserProfile(AccessToken newAccessToken) {
         GraphRequest request = GraphRequest.newMeRequest(newAccessToken, new GraphRequest.GraphJSONObjectCallback() {
             @Override
             public void onCompleted(JSONObject object, GraphResponse response) {
                 try {
-                    String first_name = object.getString("first_name");
-                    String last_name = object.getString("last_name");
-                    String email = object.getString("email");
+                    first_name = object.getString("first_name");
+                    last_name = object.getString("last_name");
+                    email = object.getString("email");
+                    id = object.getString("id");
 
-                    txtEmail.setText(email);
-                    txtName.setText(first_name +" "+last_name);
+                    image_url = "http://graph.facebook.com/"+id+"/picture?type=normal";
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -101,6 +94,12 @@ public class MainActivity extends AppCompatActivity {
         parameters.putString("fields", "first_name, last_name, email");
         request.setParameters(parameters);
         request.executeAsync();
+
+        Intent intent = new Intent(this, ProfileActivity.class);
+        intent.putExtra("firstName", first_name);
+        intent.putExtra("lastName", last_name);
+        intent.putExtra("email", email);
+        intent.putExtra("imageUrl", image_url);
+        startActivity(intent);
     }
-    */
 }
