@@ -1,13 +1,12 @@
 package com.example.facebooklogintestapp;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -26,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imageView;
     private LoginButton loginButton;
     private CallbackManager callbackManager;
+    ProgressDialog dialog;
 
     private String first_name;
     private String last_name;
@@ -44,18 +44,37 @@ public class MainActivity extends AppCompatActivity {
         callbackManager = CallbackManager.Factory.create();
         loginButton.setPermissions(Arrays.asList("email", "public_profile"));
 
-        // для ответа на результат логина
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
+            //Ответ на запрос о регистрации
             public void onSuccess(LoginResult loginResult) {
-                AccessToken accessToken = loginResult.getAccessToken();
-                loadUserProfile(accessToken);
+                dialog = new ProgressDialog(MainActivity.this);
+                dialog.setMessage("Retrieving data...");
+                dialog.show();
+
+                String accessToken = loginResult.getAccessToken().getToken();
+
+                GraphRequest graphRequest = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        dialog.dismiss();
+
+                        getData(object);
+                    }
+                });
+
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "first_name, last_name, email, id");
+                graphRequest.setParameters(parameters);
+                graphRequest.executeAsync();
             }
+
             @Override
             public void onCancel() {
             }
+
             @Override
-            public void onError(FacebookException error) {
+            public void onError(FacebookException exception) {
             }
         });
     }
@@ -66,34 +85,19 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-/*
-    private void loadNextActivity(AccessToken newAccessToken) {
-        Intent intent = new Intent(this, NextActivity.class);
-        startActivity(intent);
-    }
-*/
-    private void loadUserProfile(AccessToken newAccessToken) {
-        GraphRequest request = GraphRequest.newMeRequest(newAccessToken, new GraphRequest.GraphJSONObjectCallback() {
-            @Override
-            public void onCompleted(JSONObject object, GraphResponse response) {
-                try {
-                    first_name = object.getString("first_name");
-                    last_name = object.getString("last_name");
-                    email = object.getString("email");
-                    id = object.getString("id");
+    // Десериализация полученного ответа
+    private void getData(JSONObject object) {
+        try {
+            first_name = object.getString("first_name");
+            last_name = object.getString("last_name");
+            email = object.getString("email");
+            id = object.getString("id");
 
-                    image_url = "http://graph.facebook.com/"+id+"/picture?type=normal";
+            image_url = "http://graph.facebook.com/"+id+"/picture?type=normal";
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "first_name, last_name, email");
-        request.setParameters(parameters);
-        request.executeAsync();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.putExtra("firstName", first_name);
