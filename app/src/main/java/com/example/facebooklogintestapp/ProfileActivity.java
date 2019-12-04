@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.squareup.picasso.Picasso;
 
 public class ProfileActivity extends AppCompatActivity {
     private ImageView profileImageView;
@@ -29,6 +30,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         txtName.setText(firstName+" "+lastName);
         txtEmail.setText(email);
-        Glide.with(ProfileActivity.this).load(imageUrl).into(profileImageView);
+       // Glide.with(ProfileActivity.this).load(imageUrl).into(profileImageView);
+        Picasso.with(ProfileActivity.this).load(imageUrl).into(profileImageView);
+
     }
 }
