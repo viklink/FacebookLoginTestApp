@@ -34,8 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
     private String first_name;
     private String last_name;
+    private String birthday;
     private String email;
     private String id;
+    private String link;
     URL profile_image;
 
     @Override
@@ -49,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.flowers);
 
         callbackManager = CallbackManager.Factory.create();
-        loginButton.setPermissions(Arrays.asList("email", "public_profile"));
+        loginButton.setPermissions(Arrays.asList("email", "public_profile", "user_birthday", "user_link"));
 
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -71,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 Bundle parameters = new Bundle();
-                parameters.putString("fields", "first_name, last_name, email, id");
+                parameters.putString("fields", "first_name, last_name, birthday, email, id, link");
                 graphRequest.setParameters(parameters);
                 graphRequest.executeAsync();
             }
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
             Bundle parameters = new Bundle();
-            parameters.putString("fields", "first_name, last_name, email, id");
+            parameters.putString("fields", "first_name, last_name, birthday, email, id, link");
             request.setParameters(parameters);
             request.executeAsync();
         }
@@ -113,8 +115,10 @@ public class MainActivity extends AppCompatActivity {
         try {
             first_name = object.getString("first_name");
             last_name = object.getString("last_name");
+            birthday = object.getString("birthday");
             email = object.getString("email");
             id = object.getString("id");
+            link = object.getString("link");
 
             profile_image
                     = new URL("https://graph.facebook.com/"
@@ -130,8 +134,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.putExtra("firstName", first_name);
         intent.putExtra("lastName", last_name);
+        intent.putExtra("birthday", birthday);
         intent.putExtra("email", email);
         intent.putExtra("imageUrl", profile_image.toString());
+        intent.putExtra("profileUrl", link);
         startActivity(intent);
     }
 }
